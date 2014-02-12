@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:fillViewport="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:scrollbars="none" >
+
+        <RelativeLayout
+            android:id="@+id/checkPVTForm"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/check_pvt_form_layout"
+            android:padding="5dp" >
+
+            <TextView
+                android:id="@+id/plateSource"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:text="@string/plate_source"
+                android:textSize="8pt"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/plateSourceSelected"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@+id/plateSource"
+                android:layout_alignBottom="@+id/plateSource"
+                android:layout_marginLeft="40dp"
+                android:textSize="8pt"
+                android:gravity="center_vertical"
+                android:text="@string/plate_source_value"
+                android:layout_toRightOf="@+id/plateSource" />
+
+            <TextView
+                android:id="@+id/plateCode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/plateSource"
+                android:layout_marginTop="20dp"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:text="@string/plate_code"
+                android:textSize="8pt"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/plateNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/plateCode"
+                android:layout_marginTop="20dp"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:text="@string/plate_number"
+                android:textSize="8pt"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/plateCodeSelected"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:textSize="8pt"
+                android:layout_alignBottom="@+id/plateCode"
+                android:layout_alignLeft="@+id/plateSourceSelected"
+                android:layout_alignTop="@+id/plateCode"
+                android:layout_below="@+id/plateSourceSelected"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:text="@string/plate_code" />
+            
+            <TextView
+                android:id="@+id/plateNumberSelected"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="8pt"
+                android:gravity="center_vertical"
+                android:layout_alignBottom="@+id/plateNumber"
+                android:layout_alignLeft="@+id/plateSourceSelected"
+                android:layout_alignRight="@+id/plateCodeSelected"
+                android:layout_alignTop="@+id/plateNumber"
+                android:ems="10"
+                android:maxLength="20"
+                android:singleLine="true"
+                android:text="@string/plate_number_value" />
+
+            <TextView
+                android:id="@+id/Category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/plateNumber"
+                android:layout_marginTop="20dp"
+                android:paddingBottom="5dp"
+                android:paddingTop="5dp"
+                android:text="@string/category"
+                android:textSize="8pt"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/categorySelected"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:textSize="8pt"
+                android:layout_alignBottom="@+id/Category"
+                android:layout_alignLeft="@+id/plateNumberSelected"
+                android:layout_alignTop="@+id/Category"
+                android:text="@string/plate_category_value" />
+
+            <TextView
+                android:id="@+id/Region"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/Category"
+                android:layout_marginTop="20dp"
+                android:text="@string/region"
+                android:textSize="8pt"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/regionSelected"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:layout_alignBottom="@+id/Region"
+                android:layout_alignLeft="@+id/categorySelected"
+                android:layout_alignTop="@+id/Region"
+                android:textSize="8pt"
+                android:text="@string/plate_region_value" />
+
+            <Button
+                android:id="@+id/printPVTButton"
+                android:layout_marginTop="10dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/Region"
+                android:layout_alignParentRight="true"
+                android:layout_below="@+id/Region"
+                android:text="@string/print_pvt_button_lable" />
+
+        </RelativeLayout>
+    </ScrollView>

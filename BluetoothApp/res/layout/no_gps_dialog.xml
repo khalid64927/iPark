@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp" >
+
+    <TextView
+        android:id="@+id/store_map_no_gps_msg_line_one"
+        android:layout_marginTop="10dp"
+        android:layout_below="@+id/store_map_no_gps_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center_horizontal"
+        android:text="store_map_no_gps_msg_line_two" />
+
+
+    <TextView
+        android:id="@+id/store_map_no_gps_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_horizontal"
+        android:text="store_map_no_gps_title"
+        android:textStyle="bold" />
+
+     <Button
+         android:id="@+id/okButton"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_below="@+id/store_map_no_gps_msg_line_one"
+         android:layout_centerHorizontal="true"
+         android:layout_marginTop="14dp"
+         android:text="@string/ok_lable" />
+
+</RelativeLayout>

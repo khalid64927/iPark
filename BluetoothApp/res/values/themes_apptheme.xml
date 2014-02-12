@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="AppTheme" parent="@style/parkingAppTheme"/>
+
+  <style name="parkingAppTheme" parent="Theme.AppCompat.Light">
+
+    <item name="android:editTextStyle">@style/EditTextAppTheme</item>
+
+    <item name="android:textColorHighlight">#9958743a</item>
+
+    <item name="android:checkboxStyle">@style/CheckBoxAppTheme</item>
+
+    <item name="android:radioButtonStyle">@style/RadioButtonAppTheme</item>
+
+    <item name="android:buttonStyle">@style/ButtonAppTheme</item>
+
+    <item name="android:imageButtonStyle">@style/ImageButtonAppTheme</item>
+
+    <item name="android:spinnerStyle">@style/SpinnerAppTheme</item>
+
+    <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemAppTheme</item>
+
+    <item name="android:progressBarStyleHorizontal">@style/ProgressBarAppTheme</item>
+
+    <item name="android:buttonStyleToggle">@style/ToggleAppTheme</item>
+    
+    <item name="android:actionBarStyle">@style/MyActionBar</item>
+    
+    <item name="android:actionBarTabStyle">@style/MyActionBarTabStyle</item>
+    
+    <item name="android:actionMenuTextColor">@color/blue</item>
+    
+    <item name="android:actionMenuTextAppearance">@style/ActionBarMenuTextAppearance</item>
+    
+    <item name="actionMenuTextColor">@color/blue</item>
+
+  </style>
+
+</resources>

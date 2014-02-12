@@ -1,0 +1,52 @@
+<resources>
+
+    <color name="com_colors_tab_bar_hightlighted_gray">#a4a4a4</color>
+    <color name="cat_text_gray_color_disabled">#686868</color>
+    <color name="grey">#7A7A7A</color>
+    <color name="background">#0044AA</color>
+    <color name="bluelight">#449DEF</color>
+    <color name="bluedark">#00008B</color>
+    <color name="greenlight">#70C656</color>
+    <color name="greendark">#53933F</color>
+    <color name="orangelight">#F3AE1B</color>
+    <color name="orangedark">#EC7404</color>
+    <color name="black">#000000</color>
+    <color name="red">#ff0000</color>
+    <color name="violet">#8A2BE2</color>
+    <color name="orange">#FFA500</color>
+    <color name="orangered">#FF4500</color>
+    <color name="basique">#FFE4C4</color>
+    <color name="skyblue">#87CEEB</color>
+    <color name="aliceblue">#F0F8FF</color>
+    <color name="yellow">#FFFF00</color>
+    <color name="bleuecarrefour">#004ea0</color>
+    <color name="prehome_green">#9BC01E</color>
+    <color name="white">#FFFFFF</color>
+    <color name="font_color">#7f7f7f</color>
+    <!-- added for omnia -->
+    <color name="blue">#165BA0</color>
+    <color name="light_grey">#DEDFE6</color>
+    <color name="splash_screen_grey">#DFE1E8</color>
+
+    <color name="black_new">#0A0A0A</color>
+    <color name="lemon_green">#99CC00</color>
+    <color name="slot_green">#C9E094</color>
+
+    <!-- my location bg color -->
+    <color name="my_location_color">#0EB8E0</color>
+
+    
+    <color name="button_disabled">#C6C9CE</color>
+    <color name="slot_green_text">#1B8900</color>
+    
+      <color name="blue_reg_text">#0000ff</color>
+      <color name="grey_reg_text">#E2E2E2</color>
+      <color name="checkout_blue">#00519E</color>
+      <color name="checkout_brick_red">#D15353</color>
+      <color name="dark_grey">#B0B1B5</color>
+      <color name="payment_light_green">#E6F0CE</color>
+      <color name="payment_dark_green">#9EB414</color>
+      <color name="check_pvt_form_layout">#F7F7F7</color>
+      
+ <color name="translusent">#9EB414</color>
+</resources>
