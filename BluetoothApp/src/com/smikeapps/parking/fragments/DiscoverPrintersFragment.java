@@ -54,7 +54,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 	private ZebraPrinterConnection zebraPrinterConnection;
 	private ScannerAdapter adapter;
 	private BluetoothAdapter mBluetoothAdapter;
-	private static final String TAG = DiscoverPrintersFragment.class.getName();
+	private static final String TAG = DiscoverPrintersFragment.class.getSimpleName();
 	Set<BluetoothDevice> pairedDevices;
 	// requestCode to turn on bluetooth
 	private static final int REQUEST_ENABLE_BT = 1;
@@ -86,10 +86,9 @@ public class DiscoverPrintersFragment extends Fragment implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setHasOptionsMenu(true);
 		setUpActionBar();
 		isCalledForResult = getArguments().containsKey(EXTRA_TAG_IS_CALLLED_FOR_RESULT);
-		PrinterDetail.getPrinterList().clear();
+	//	PrinterDetail.getPrinterList().clear();
 		mRoootView = LayoutInflater.from(getActivity()).inflate(
 				R.layout.fragment_discover_printers, null);
 		mDiscoveredDevicesListView = (ListView) mRoootView
@@ -101,6 +100,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 		((HomeBaseActivity) getActivity()).getSupportActionBar()
 				.setTitle(getActivity().getString(R.string.discover_printer));
 		getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+		((HomeBaseActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		setHasOptionsMenu(true);
 	}
 	
@@ -112,6 +112,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 	@Override
 	public void onPause() {
 		super.onPause();
+		hideProgressDialog();
 		mDiscoverDevicesHandler.removeMessages(CHECK_FOR_DEVICES);
 		enableScanButton(true);
 	}
@@ -153,6 +154,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 	private void turnOnBlutooth() {
 		Log.d(TAG, "turnOnBlutooth   :: ...");
+		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (!mBluetoothAdapter.isEnabled()) {
 			Intent enableBtIntent = new Intent(
 					BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -163,10 +165,8 @@ public class DiscoverPrintersFragment extends Fragment implements
 				startConnectionTest();
 			} else {
 				// start discovery
+		//		showProgressDialog("starting printer discovery");
 				setUpDiscovery();
-				/*scanForPairedDevices();
-				adapter = new ScannerAdapter(PrinterDetail.getPrinterList());
-				startDiscoveringDevices();*/
 			}
 		}
 	}
@@ -215,7 +215,8 @@ public class DiscoverPrintersFragment extends Fragment implements
 						device.getAddress())) {
 					Log.d(TAG,
 							"BroadcastReceiver :: mReceiver  :: device found and added");
-					notifyDataSetCanged();
+				//	notifyDataSetCanged();
+					setDeviceAdapter();
 				} else {
 					Log.d(TAG,
 							"BroadcastReceiver :: mReceiver  :: device found not added");
@@ -224,7 +225,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 		}
 	};
 
-	private void notifyDataSetCanged() {
+	/*private void notifyDataSetCanged() {
 		getActivity().runOnUiThread(new Runnable() {
 
 			@Override
@@ -233,7 +234,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 			}
 		});
-	}
+	}*/
 
 	private final BroadcastReceiver mBluetoothState = new BroadcastReceiver() {
 

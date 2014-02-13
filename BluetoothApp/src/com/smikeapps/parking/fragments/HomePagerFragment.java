@@ -136,14 +136,36 @@ public void refreshActionBar() {
 
 	@Override
 	public boolean onBackButtonPressed() {
-		return false;
+		return navigateBack();
 	}
 
 	@Override
 	public boolean onNavigationBackButtonPressed() {
-		return false;
+		return navigateBack();
 	}
 	
+	private boolean navigateBack ( ) {
+		boolean res = false;
+		Fragment fragment = mTabsAdapter.getFragment(mCurrTabPosition);
+		
+		if (null != fragment) {
+			FragmentManager childFragmentManager = fragment.getChildFragmentManager();
+			int childCount = childFragmentManager.getBackStackEntryCount();
+
+			if (childCount > 0) {
+				BackStackEntry fragmentEntry = childFragmentManager.getBackStackEntryAt(childCount - 1);
+				fragment = childFragmentManager.findFragmentByTag(fragmentEntry.getName());
+				if (fragment instanceof BackButtonInterface) {
+					res = ((BackButtonInterface) fragment).onBackButtonPressed();
+				}
+			} else {
+				if (fragment instanceof BackButtonInterface) {
+					res = ((BackButtonInterface) fragment).onBackButtonPressed();
+				}
+			}
+		}
+		return res;
+	}
 	
 	public static class TabsAdapter extends FragmentStatePagerAdapter {
 		private final int MAX_TAB_COUNT = 2;

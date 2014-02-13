@@ -2,7 +2,6 @@
 
     <item
         android:id="@+id/printers"
-        android:orderInCategory="100"
         android:showAsAction="always|withText"
         android:title="@string/action_printer"/>
     
