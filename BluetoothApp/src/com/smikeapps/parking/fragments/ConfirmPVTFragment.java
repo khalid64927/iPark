@@ -1,10 +1,5 @@
 package com.smikeapps.parking.fragments;
 
-import com.smikeapps.parking.R;
-import com.smikeapps.parking.activities.HomeScreenActivity;
-import com.smikeapps.parking.interfaces.BackButtonInterface;
-import com.smikeapps.parking.tabs.HomeContainerInterface;
-
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -12,6 +7,11 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Button;
+
+import com.smikeapps.parking.R;
+import com.smikeapps.parking.activities.HomeScreenActivity;
+import com.smikeapps.parking.interfaces.BackButtonInterface;
+import com.smikeapps.parking.tabs.HomeContainerInterface;
 
 public class ConfirmPVTFragment extends Fragment implements BackButtonInterface, HomeContainerInterface{
 

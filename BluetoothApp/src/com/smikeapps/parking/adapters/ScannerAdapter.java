@@ -43,7 +43,6 @@ public class ScannerAdapter extends BaseAdapter{
 		}else{
 			viewHolder = (ViewHolder)convertView.getTag();
 		}
-		
 		viewHolder.setData(printerLsit.get(position), position);
 		return convertView;
 }

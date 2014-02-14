@@ -1,6 +1,5 @@
 package com.smikeapps.parking.fragments;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 import android.app.ProgressDialog;
@@ -9,12 +8,11 @@ import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -63,14 +61,11 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	// requestCode to turn on bluetooth
 	private static final int REQUEST_ENABLE_BT = 1;
 	private static final int BLUTOOTH_DISCOVERABILITY_DURATION = 300;
-	private DiscoverDevicesHandler mDiscoverDevicesHandler;
 	private static final int TWELVE_SECONDS = 12000;
 	private static final int ONE_SECOND = 1000;
 	private static final int CHECK_FOR_DEVICES = REQUEST_ENABLE_BT + 1;
-	private int mDiscoveryDuration;
-	private int mInquiryDuration;
-	private ArrayList<PrinterDetail> printers;
 	private boolean onPauseCalled = false;
+	private boolean isProcessFinished = true;
 
 	private static final int GET_MAC_ADDDRESS_REQUEST_CODE = CHECK_FOR_DEVICES + 1;
 	public static final int GET_MAC_ADDDRESS_RESULT_CODE = GET_MAC_ADDDRESS_REQUEST_CODE + 1;
@@ -107,7 +102,6 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		boolean response = false;
 		switch (item.getItemId()) {
 		case R.id.printers:
-			mDiscoverDevicesHandler.removeMessages(CHECK_FOR_DEVICES);
 			disconnect();
 			Intent intent = new Intent(getActivity(),
 					DiscoverPrinterActivity.class);
@@ -122,7 +116,6 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 			break;
 
 		case R.id.cancle_scan_of_printers:
-			mDiscoverDevicesHandler.removeMessages(CHECK_FOR_DEVICES);
 			disconnect();
 			response = true;
 			break;
@@ -137,9 +130,6 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	private void initUI() {
 		mPrintPVTButton = (Button) mRoootView.findViewById(R.id.printPVTButton);
 		mPrintPVTButton.setOnClickListener(onPrintPVTButtonClicked);
-
-		mDiscoverDevicesHandler = new DiscoverDevicesHandler();
-		printers = new ArrayList<PrinterDetail>();
 	}
 
 	public static PrintPVTFragment newInstance(int tabPosition) {
@@ -155,6 +145,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		@Override
 		public void onClick(View v) {
 			showProgressDialog("intializing print...");
+			isProcessFinished = false;
 			mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 			if (mBluetoothAdapter == null) {
 				// Device does not support Bluetooth
@@ -188,34 +179,6 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		}
 	}
 
-	// Create a BroadcastReceiver for ACTION_FOUND
-	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-		public void onReceive(Context context, Intent intent) {
-			String action = intent.getAction();
-			// When discovery finds a device
-			if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-				// Get the BluetoothDevice object from the Intent
-				BluetoothDevice device = intent
-						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-				// Add the name and address to an array adapter to show in a
-				// ListView
-				if (PrinterDetail.addPrinter(device.getName(),
-						device.getAddress())) {
-					Log.d(TAG,
-							"BroadcastReceiver :: mReceiver  :: device found and added");
-					notifyDataSetCanged();
-				} else {
-					Log.d(TAG,
-							"BroadcastReceiver :: mReceiver  :: device found not added");
-				}
-				/*
-				 * mArrayAdapter .add(device.getName() + "\n" +
-				 * device.getAddress());
-				 */
-			}
-		}
-	};
-
 	private void notifyDataSetCanged() {
 		if (onPauseCalled) {
 			return;
@@ -235,30 +198,35 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
-
+			Log.d(TAG, "onReceive  :: .....");
 			if (action.equals(mBluetoothAdapter.ACTION_SCAN_MODE_CHANGED)) {
 				int var1 = intent.getIntExtra(
 						mBluetoothAdapter.EXTRA_SCAN_MODE, 0);
 				int var2 = intent.getIntExtra(
 						mBluetoothAdapter.EXTRA_PREVIOUS_SCAN_MODE, 0);
 				if (var1 == mBluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-
+					// discoverable mode
+					checkForConnPrinter();
+					Log.d(TAG, " discoverable mode");
 				} else if (var1 == mBluetoothAdapter.SCAN_MODE_CONNECTABLE) {
-
+					checkForConnPrinter();
+					// not in discoverable mode but still able to receive connections
+					Log.d(TAG, "  not in discoverable mode but still able to receive connections");
 				} else if (var1 == mBluetoothAdapter.SCAN_MODE_NONE) {
-
+					// not in discoverable mode and unable to receive connections
+					checkForConnPrinter();
+					Log.d(TAG, " not in discoverable mode and unable to receive connections");
 				}
 
 				if (var2 == mBluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-
+					// discoverable mode
 				} else if (var2 == mBluetoothAdapter.SCAN_MODE_CONNECTABLE) {
-
+					// not in discoverable mode but still able to receive connections
 				} else if (var2 == mBluetoothAdapter.SCAN_MODE_NONE) {
-
+					// not in discoverable mode and unable to receive connections
 				}
 			}
 		}
-
 	};
 
 	private void makeDeviceDiscoverable() {
@@ -281,7 +249,6 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 				startConnectionTest();
 			} else {
 				showProgressDialog("Printer not set, moving to printer discovery");
-				// start discovery
 				openPrinterDiscovery(true);
 			}
 		}
@@ -523,16 +490,6 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		}
 	}
 
-	private void startDiscoveringDevices() {
-		stopDiscoveringDevices();
-		mBluetoothAdapter.startDiscovery();
-		mDiscoverDevicesHandler.sendEmptyMessageDelayed(CHECK_FOR_DEVICES,
-				ONE_SECOND);
-	}
-
-	private void stopDiscoveringDevices() {
-		mBluetoothAdapter.cancelDiscovery();
-	}
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -542,25 +499,44 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 
 		} else if (requestCode == getActivity().RESULT_CANCELED) {
 			// failed to turn on Bluetooth
-		} else if (requestCode == REQUEST_ENABLE_BT && resultCode == 1) {
-			// Bluetooth turned on successfully
-			if (AccountPreference.getPrinter() != null) {
-				startConnectionTest();
-			} else {
-				showProgressDialog("Bluetooth turned on, No printer set ");
-				openPrinterDiscovery(true);
-			}
-			// mDiscoverDevicesHandler.sendEmptyMessageDelayed(CHECK_FOR_DEVICES,
-			// ONE_SECOND);
-		} else if (requestCode == GET_MAC_ADDDRESS_REQUEST_CODE
+		} /*else if (requestCode == REQUEST_ENABLE_BT && resultCode == 1) {
+			checkForConnPrinter();
+		}else if (requestCode == REQUEST_ENABLE_BT && resultCode != 1) {
+			// unsuccessful in turning ON Bluetooth
+			hideProgressDialog();
+			showAlertDialog("Failure !", "Unable to turn ON Bluetooth","Ok", btOkButton);
+		}*/ /*else if (requestCode == GET_MAC_ADDDRESS_REQUEST_CODE
 				&& resultCode == GET_MAC_ADDDRESS_RESULT_CODE) {
 			startConnectionTest();
+		}*/
+	}
+	
+	private void checkForConnPrinter(){
+		Log.d(TAG, " checkForConnPrinter :: .....");
+		if(isProcessFinished){
+			return;
+		}
+		isProcessFinished = true;
+		// Bluetooth turned on successfully
+		if (AccountPreference.getPrinter() != null) {
+			startConnectionTest();
+		} else {
+			showProgressDialog("Bluetooth turned on, No printer set ");
+			openPrinterDiscovery(true);
 		}
 	}
+	
+	private DialogInterface.OnClickListener btOkButton = new OnClickListener() {
+		
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			// TODO Auto-generated method stub
+			
+		}
+	};
 
 	private void openPrinterDiscovery(boolean isForResult) {
 		disconnect();
-
 		Intent intent = new Intent(getActivity(), DiscoverPrinterActivity.class);
 		Bundle extra = new Bundle();
 		extra.putBoolean(
@@ -578,24 +554,12 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		// Register the BroadcastReceiver
 		IntentFilter filter = new IntentFilter(
 				mBluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-		getActivity().registerReceiver(mBluetoothState, filter); // Don't forget
-																	// to
-																	// unregister
-		// during onDestroy
-	}
-
-	private void registerForDeviceDiscovery() {
-		// Register the BroadcastReceiver
-		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-		getActivity().registerReceiver(mReceiver, filter); // Don't forget to
-															// unregister
-		// during onDestroy
+		getActivity().registerReceiver(mBluetoothState, filter);
 	}
 
 	@Override
 	public void onStart() {
 		super.onStart();
-		registerForDeviceDiscovery();
 		registerForBluetoothStateChanges();
 	}
 
@@ -610,44 +574,21 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		super.onPause();
 		hideProgressDialog();
 		onPauseCalled = true;
-		mDiscoverDevicesHandler.removeMessages(CHECK_FOR_DEVICES);
 	}
 
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		getActivity().unregisterReceiver(mReceiver);
+	}
+	
+	@Override
+	public void onStop() {
+		super.onStop();
+		Log.d(TAG, "onStop()  ::");
 		getActivity().unregisterReceiver(mBluetoothState);
 	}
 
-	private class DiscoverDevicesHandler extends Handler {
-
-		@Override
-		public void handleMessage(Message msg) {
-			super.handleMessage(msg);
-			mDiscoveryDuration++;
-			switch (msg.what) {
-
-			case CHECK_FOR_DEVICES:
-				if (mDiscoveryDuration <= 5) {
-					// check if printer is found
-					scanForDevices();
-					mDiscoverDevicesHandler.sendEmptyMessageDelayed(
-							CHECK_FOR_DEVICES, ONE_SECOND);
-				} else if (mDiscoveryDuration >= 5) {
-					// discovery duration finished
-					mDiscoveryDuration = 0;
-					mDiscoverDevicesHandler.removeMessages(CHECK_FOR_DEVICES);
-					disconnect();
-				}
-
-				break;
-
-			default:
-				break;
-			}
-		}
-	}
+	
 
 	@Override
 	public boolean onBackButtonPressed() {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">mParking</string>
+    <string name="app_name">iParking</string>
     <string name="action_scan">Scan</string>
     <string name="action_scan_cancle">Stop</string>
     <string name="action_printer">Printers</string>
@@ -26,6 +26,10 @@
 	<string name="plate_region_value">Block A</string>
 	<string name="print_pvt_button_lable">Print PVT</string>
 	<string name="discover_printer">Printers</string>
+	
+	<string name="invalid_access_token">Invalid Token</string>
+	<string name="app_failure_case_undefined">Printer app failure case undefined</string>
+	<string name="server_not_responding">server_not_responding</string>
 	
 	
 	

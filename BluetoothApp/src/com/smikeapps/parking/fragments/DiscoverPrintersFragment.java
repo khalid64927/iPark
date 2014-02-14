@@ -1,6 +1,5 @@
 package com.smikeapps.parking.fragments;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 import android.app.ProgressDialog;
@@ -9,6 +8,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
@@ -22,6 +22,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -43,8 +44,7 @@ import com.zebra.android.printer.ZebraPrinter;
 import com.zebra.android.printer.ZebraPrinterFactory;
 import com.zebra.android.printer.ZebraPrinterLanguageUnknownException;
 
-public class DiscoverPrintersFragment extends Fragment implements
-		BackButtonInterface {
+public class DiscoverPrintersFragment extends Fragment implements BackButtonInterface {
 
 	private View mRoootView;
 	private ListView mDiscoveredDevicesListView;
@@ -64,21 +64,23 @@ public class DiscoverPrintersFragment extends Fragment implements
 	private static final int ONE_SECOND = 1000;
 	private static final int CHECK_FOR_DEVICES = REQUEST_ENABLE_BT + 1;
 	private int mDiscoveryDuration;
-	private int mInquiryDuration;
-	private ArrayList<PrinterDetail> printers;
+//	private ArrayList<PrinterDetail> printers;
 	public static final String EXTRA_TAG_IS_CALLLED_FOR_RESULT = "is_called_for_result";
 
 	private ProgressDialog progressDialog;
 	private boolean isPrinterSelected = false;
 	private boolean isCalledForResult = false;
+	private boolean isCancled = false;
 
 	public DiscoverPrintersFragment() {
 	}
 
-	public static DiscoverPrintersFragment newInstance(Bundle extra) { 
+	public static DiscoverPrintersFragment newInstance(Bundle extra) {
 		DiscoverPrintersFragment fragment = new DiscoverPrintersFragment();
-		/*Bundle extra = new Bundle();
-		extra.putBoolean("is_called_for_result", isCalledOnResult);*/
+		/*
+		 * Bundle extra = new Bundle(); extra.putBoolean("is_called_for_result",
+		 * isCalledOnResult);
+		 */
 		fragment.setArguments(extra);
 		return fragment;
 	}
@@ -86,33 +88,48 @@ public class DiscoverPrintersFragment extends Fragment implements
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		Log.d(TAG, "onCreate   :: ...");
 		setUpActionBar();
+//		printers = new ArrayList<PrinterDetail>();
 		isCalledForResult = getArguments().containsKey(EXTRA_TAG_IS_CALLLED_FOR_RESULT);
-	//	PrinterDetail.getPrinterList().clear();
-		mRoootView = LayoutInflater.from(getActivity()).inflate(
-				R.layout.fragment_discover_printers, null);
-		mDiscoveredDevicesListView = (ListView) mRoootView
-				.findViewById(R.id.printerList);
+		// PrinterDetail.getPrinterList().clear();
+		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+	}
+	
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		mRoootView = inflater.inflate(R.layout.fragment_discover_printers, null);
+		mDiscoveredDevicesListView = (ListView) mRoootView.findViewById(R.id.printerList);
 		mDiscoverDevicesHandler = new DiscoverDevicesHandler();
+		return mRoootView;
 	}
 
 	private void setUpActionBar() {
-		((HomeBaseActivity) getActivity()).getSupportActionBar()
-				.setTitle(getActivity().getString(R.string.discover_printer));
+		Log.d(TAG, "setUpActionBar   :: ...");
+		((HomeBaseActivity) getActivity()).getSupportActionBar().setTitle(getActivity().getString(R.string.discover_printer));
 		getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 		((HomeBaseActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		setHasOptionsMenu(true);
 	}
-	
+
 	@Override
 	public void onResume() {
 		super.onResume();
+		Log.d(TAG, "onResume   :: ...");
+		registerForDeviceDiscovery();
+		registerForBluetoothStateChanges();
+		if (isCalledForResult && !isCancled) {
+			startProcess();
+		}
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
+		Log.d(TAG, "onPause   :: ...");
 		hideProgressDialog();
+		getActivity().unregisterReceiver(mReceiver);
+		getActivity().unregisterReceiver(mBluetoothState);
 		mDiscoverDevicesHandler.removeMessages(CHECK_FOR_DEVICES);
 		enableScanButton(true);
 	}
@@ -120,64 +137,54 @@ public class DiscoverPrintersFragment extends Fragment implements
 	@Override
 	public void onStart() {
 		super.onStart();
-		registerForDeviceDiscovery();
-		registerForBluetoothStateChanges();
-		if(isCalledForResult){
-			startProcess();
-		}
+		Log.d(TAG, "onStart   :: ...");
 	}
 
 	@Override
 	public void onStop() {
 		super.onStop();
-		getActivity().unregisterReceiver(mReceiver);
-		getActivity().unregisterReceiver(mBluetoothState);
+		Log.d(TAG, "onStop()   :: ...");
 	}
 
 	@Override
 	public void onDestroy() {
-		// TODO Auto-generated method stub
 		super.onDestroy();
+		Log.d(TAG, "onDestroy()   :: ...");
 	}
 
 	@Override
 	public boolean onBackButtonPressed() {
-		// TODO Auto-generated method stub
+		// getParentFragment().getParentFragment().getChildFragmentManager().popBackStack();
 		return false;
 	}
 
 	@Override
 	public boolean onNavigationBackButtonPressed() {
-		// TODO Auto-generated method stub
+		// getParentFragment().getParentFragment().getChildFragmentManager().popBackStack();
 		return false;
 	}
 
 	private void turnOnBlutooth() {
 		Log.d(TAG, "turnOnBlutooth   :: ...");
-		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (!mBluetoothAdapter.isEnabled()) {
-			Intent enableBtIntent = new Intent(
-					BluetoothAdapter.ACTION_REQUEST_ENABLE);
-			getParentFragment().startActivityForResult(enableBtIntent,
-					REQUEST_ENABLE_BT);
+			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+			getActivity().startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 		} else {
 			if (AccountPreference.getPrinter() != null) {
 				startConnectionTest();
 			} else {
 				// start discovery
-		//		showProgressDialog("starting printer discovery");
+				// showProgressDialog("starting printer discovery");
 				setUpDiscovery();
 			}
 		}
 	}
-	
-	
-	private void setUpDiscovery(){
+
+	private void setUpDiscovery() {
 		Log.d(TAG, "setUpDiscovery   :: ...");
 		setDeviceAdapter();
 		startDiscoveringDevices();
-		mDiscoverDevicesHandler.sendEmptyMessageDelayed(CHECK_FOR_DEVICES,
-				ONE_SECOND);
+		mDiscoverDevicesHandler.sendEmptyMessageDelayed(CHECK_FOR_DEVICES, ONE_SECOND);
 	}
 
 	private void scanForPairedDevices() {
@@ -189,15 +196,30 @@ public class DiscoverPrintersFragment extends Fragment implements
 			for (BluetoothDevice device : pairedDevices) {
 				// Add the name and address to an array adapter to show in a
 				// ListView
-				if (PrinterDetail.addPrinter(device.getName(),
-						device.getAddress())) {
+			//	printers.add(new PrinterDetail(device.getName(), device.getAddress()));
+				
+				if (PrinterDetail.addPrinter(device.getName(), device.getAddress())) {
 					Log.d(TAG, "scanForDevices   :: device found and added");
+					notifyPrinterDataSetCanged();
 				} else {
 					Log.d(TAG, "scanForDevices   :: device found not added");
 				}
 
 			}
 		}
+	}
+	
+	private void notifyPrinterDataSetCanged(){
+		Log.d(TAG, "notifyPrinterDataSetCanged :: .....");
+		getActivity().runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				if(adapter != null){
+					adapter.notifyDataSetChanged();
+				}
+			}
+		});
 	}
 
 	// Create a BroadcastReceiver for ACTION_FOUND
@@ -207,60 +229,58 @@ public class DiscoverPrintersFragment extends Fragment implements
 			// When discovery finds a device
 			if (BluetoothDevice.ACTION_FOUND.equals(action)) {
 				// Get the BluetoothDevice object from the Intent
-				BluetoothDevice device = intent
-						.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+				BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				// Add the name and address to an array adapter to show in a
 				// ListView
-				if (PrinterDetail.addPrinter(device.getName(),
-						device.getAddress())) {
-					Log.d(TAG,
-							"BroadcastReceiver :: mReceiver  :: device found and added");
-				//	notifyDataSetCanged();
-					setDeviceAdapter();
+
+				/*printers.add(new PrinterDetail(device.getName(), device.getAddress()));
+				setDeviceAdapter();*/
+				
+				if (PrinterDetail.addPrinter(device.getName(), device.getAddress())) {
+					Log.d(TAG, "BroadcastReceiver :: mReceiver  :: device found and added");
+					notifyPrinterDataSetCanged();
 				} else {
-					Log.d(TAG,
-							"BroadcastReceiver :: mReceiver  :: device found not added");
+					Log.d(TAG, "BroadcastReceiver :: mReceiver  :: device found not added");
 				}
+				 
 			}
 		}
 	};
 
-	/*private void notifyDataSetCanged() {
-		getActivity().runOnUiThread(new Runnable() {
-
-			@Override
-			public void run() {
-				adapter.notifyDataSetChanged();
-
-			}
-		});
-	}*/
+	/*
+	 * private void notifyDataSetCanged() { getActivity().runOnUiThread(new
+	 * Runnable() {
+	 * 
+	 * @Override public void run() { adapter.notifyDataSetChanged();
+	 * 
+	 * } }); }
+	 */
 
 	private final BroadcastReceiver mBluetoothState = new BroadcastReceiver() {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			String action = intent.getAction();
-
+			Log.d(TAG, "onReceive() ::...  bluetooth state   :: ...");
 			if (action.equals(mBluetoothAdapter.ACTION_SCAN_MODE_CHANGED)) {
-				int var1 = intent.getIntExtra(
-						mBluetoothAdapter.EXTRA_SCAN_MODE, 0);
-				int var2 = intent.getIntExtra(
-						mBluetoothAdapter.EXTRA_PREVIOUS_SCAN_MODE, 0);
+				int var1 = intent.getIntExtra(mBluetoothAdapter.EXTRA_SCAN_MODE, 0);
+				int var2 = intent.getIntExtra(mBluetoothAdapter.EXTRA_PREVIOUS_SCAN_MODE, 0);
 				if (var1 == mBluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-
+					// setUpDiscovery();
 				} else if (var1 == mBluetoothAdapter.SCAN_MODE_CONNECTABLE) {
-
+					// setUpDiscovery();
 				} else if (var1 == mBluetoothAdapter.SCAN_MODE_NONE) {
-
+					setUpDiscovery();
 				}
 
 				if (var2 == mBluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
-
+					// discoverable mode
 				} else if (var2 == mBluetoothAdapter.SCAN_MODE_CONNECTABLE) {
-
+					// not in discoverable mode but still able to receive
+					// connections
 				} else if (var2 == mBluetoothAdapter.SCAN_MODE_NONE) {
-
+					// not in discoverable mode and unable to receive
+					// connections
 				}
 			}
 		}
@@ -269,11 +289,8 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 	private void makeDeviceDiscoverable() {
 		Log.d(TAG, "makeDeviceDiscoverable   :: ...");
-		Intent discoverableIntent = new Intent(
-				BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-		discoverableIntent.putExtra(
-				BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION,
-				BLUTOOTH_DISCOVERABILITY_DURATION);
+		Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+		discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, BLUTOOTH_DISCOVERABILITY_DURATION);
 		startActivity(discoverableIntent);
 	}
 
@@ -296,8 +313,10 @@ public class DiscoverPrintersFragment extends Fragment implements
 	protected void enableScanButton(final boolean enabled) {
 		getActivity().runOnUiThread(new Runnable() {
 			public void run() {
-				/*scanMenuItem.setEnabled(enabled);
-				cancleMenuItem.setEnabled(!enabled);*/
+				/*
+				 * scanMenuItem.setEnabled(enabled);
+				 * cancleMenuItem.setEnabled(!enabled);
+				 */
 			}
 		});
 
@@ -319,8 +338,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 		if (progressDialog != null) {
 			return;
 		}
-		progressDialog = ProgressDialog.show(getActivity(), "", loadingMessage,
-				true);
+		progressDialog = ProgressDialog.show(getActivity(), "", loadingMessage, true);
 	}
 
 	private void changeProgressMessage(final String message) {
@@ -354,23 +372,18 @@ public class DiscoverPrintersFragment extends Fragment implements
 		Log.d(TAG, "connect   :: ...");
 		changeProgressMessage("Connecting...");
 		zebraPrinterConnection = null;
-		if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
-				&& !mBluetoothAdapter.isDiscovering()) {
-			zebraPrinterConnection = new BluetoothPrinterConnection(
-					AccountPreference.getPrinter());
+		if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && !mBluetoothAdapter.isDiscovering()) {
+			zebraPrinterConnection = new BluetoothPrinterConnection(AccountPreference.getPrinter());
 			// SettingsHelper.saveBluetoothAddress(this,
 			// getMacAddressFieldText());
 		} else {
-			Log.d(TAG,
-					"connect  :: bluetooth is not present or OFF or in Discovering device now ");
+			Log.d(TAG, "connect  :: bluetooth is not present or OFF or in Discovering device now ");
 		}
 
 		try {
 			zebraPrinterConnection.open();
 		} catch (ZebraPrinterConnectionException e) {
-			showAlertDialog("Comm Error",
-					"Communication error! Disconnecting .....", "Ok",
-					logoutOKBtnClick);
+			showAlertDialog("Comm Error", "Communication error! Disconnecting .....", "Ok", logoutOKBtnClick);
 			DemoSleeper.sleep(1000);
 			disconnect();
 		}
@@ -379,21 +392,16 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 		if (zebraPrinterConnection.isConnected()) {
 			try {
-				printer = ZebraPrinterFactory
-						.getInstance(zebraPrinterConnection);
+				printer = ZebraPrinterFactory.getInstance(zebraPrinterConnection);
 				changeProgressMessage("Determining Printer Language");
 				PrinterLanguage pl = printer.getPrinterControlLanguage();
 			} catch (ZebraPrinterConnectionException e) {
-				showAlertDialog("Communication Error",
-						"Unable to connect with printer! Disconnecting .....",
-						"Ok", logoutOKBtnClick);
+				showAlertDialog("Communication Error", "Unable to connect with printer! Disconnecting .....", "Ok", logoutOKBtnClick);
 				printer = null;
 				DemoSleeper.sleep(1000);
 				disconnect();
 			} catch (ZebraPrinterLanguageUnknownException e) {
-				showAlertDialog(
-						"Communication Error",
-						"Unknown Printer Language! unable to connect with printer Disconnecting .....",
+				showAlertDialog("Communication Error", "Unknown Printer Language! unable to connect with printer Disconnecting .....",
 						"Ok", logoutOKBtnClick);
 				printer = null;
 				DemoSleeper.sleep(1000);
@@ -428,14 +436,12 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 	};
 
-	private void showAlertDialog(final String title, final String message,
-			final String okButtonLable,
+	private void showAlertDialog(final String title, final String message, final String okButtonLable,
 			final DialogInterface.OnClickListener regConfirmOKBtnClick) {
 		getActivity().runOnUiThread(new Runnable() {
 			public void run() {
 				hideProgressDialog();
-				AlertDialogHelper.showAlertDialogForLogout(getActivity(),
-						title, message, regConfirmOKBtnClick, okButtonLable);
+				AlertDialogHelper.showAlertDialogForLogout(getActivity(), title, message, regConfirmOKBtnClick, okButtonLable);
 			}
 		});
 	}
@@ -448,13 +454,11 @@ public class DiscoverPrintersFragment extends Fragment implements
 			zebraPrinterConnection.write(configLabel);
 			DemoSleeper.sleep(1500);
 			if (zebraPrinterConnection instanceof BluetoothPrinterConnection) {
-				String friendlyName = ((BluetoothPrinterConnection) zebraPrinterConnection)
-						.getFriendlyName();
+				String friendlyName = ((BluetoothPrinterConnection) zebraPrinterConnection).getFriendlyName();
 				DemoSleeper.sleep(500);
 			}
 		} catch (ZebraPrinterConnectionException e) {
-			showAlertDialog("Comm Error", " " + e.getMessage()
-					+ "! Disconnecting .....", "Ok", logoutOKBtnClick);
+			showAlertDialog("Comm Error", " " + e.getMessage() + "! Disconnecting .....", "Ok", logoutOKBtnClick);
 		} finally {
 			disconnect();
 		}
@@ -473,12 +477,10 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 		byte[] configLabel = null;
 		if (printerLanguage == PrinterLanguage.ZPL) {
-			configLabel = "^XA^FO17,16^GB379,371,8^FS^FT65,255^A0N,135,134^FDTEST^FS^XZ"
-					.getBytes();
+			configLabel = "^XA^FO17,16^GB379,371,8^FS^FT65,255^A0N,135,134^FDTEST^FS^XZ".getBytes();
 		} else if (printerLanguage == PrinterLanguage.CPCL) {
-			String cpclConfigLabel = "! 0 200 200 406 1\r\n"
-					+ "ON-FEED IGNORE\r\n" + "BOX 20 20 380 380 8\r\n"
-					+ "T 0 6 137 177 TEST\r\n" + "PRINT\r\n";
+			String cpclConfigLabel = "! 0 200 200 406 1\r\n" + "ON-FEED IGNORE\r\n" + "BOX 20 20 380 380 8\r\n" + "T 0 6 137 177 TEST\r\n"
+					+ "PRINT\r\n";
 			configLabel = cpclConfigLabel.getBytes();
 		}
 		return configLabel;
@@ -492,9 +494,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 			}
 			changeProgressMessage("Printer not connected");
 		} catch (ZebraPrinterConnectionException e) {
-			showAlertDialog("Comm Error",
-					"Communication error! Disconnecting .....", "Ok",
-					logoutOKBtnClick);
+			showAlertDialog("Comm Error", "Communication error! Disconnecting .....", "Ok", logoutOKBtnClick);
 		} finally {
 			enableScanButton(true);
 		}
@@ -504,8 +504,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 		Log.d(TAG, "startDiscoveringDevices   :: ...");
 		stopDiscoveringDevices();
 		mBluetoothAdapter.startDiscovery();
-		mDiscoverDevicesHandler.sendEmptyMessageDelayed(CHECK_FOR_DEVICES,
-				ONE_SECOND);
+		mDiscoverDevicesHandler.sendEmptyMessageDelayed(CHECK_FOR_DEVICES, ONE_SECOND);
 	}
 
 	private void stopDiscoveringDevices() {
@@ -516,21 +515,15 @@ public class DiscoverPrintersFragment extends Fragment implements
 	private void registerForBluetoothStateChanges() {
 		Log.d(TAG, "registerForBluetoothStateChanges   :: ...");
 		// Register the BroadcastReceiver
-		IntentFilter filter = new IntentFilter(
-				mBluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-		getActivity().registerReceiver(mBluetoothState, filter); // Don't forget
-																	// to
-																	// unregister
-		// during onDestroy
+		IntentFilter filter = new IntentFilter(mBluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
+		getActivity().registerReceiver(mBluetoothState, filter);
 	}
 
 	private void registerForDeviceDiscovery() {
 		Log.d(TAG, "registerForDeviceDiscovery   :: ...");
 		// Register the BroadcastReceiver
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-		getActivity().registerReceiver(mReceiver, filter); // Don't forget to
-															// unregister
-		// during onDestroy
+		getActivity().registerReceiver(mReceiver, filter);
 	}
 
 	private View.OnClickListener onScanButtonClicklistener = new View.OnClickListener() {
@@ -555,8 +548,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		Log.d(TAG,
-				"onOptionsItemSelected   :: bluetooth  hardware not present");
+		Log.d(TAG, "onCreateOptionsMenu   ::");
 		menu.clear();
 		inflater.inflate(R.menu.discover_printers_menu, menu);
 		scanMenuItem = (MenuItem) menu.getItem(0);
@@ -566,6 +558,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		Log.d(TAG, "onOptionsItemSelected   ::");
 		boolean response = false;
 		switch (item.getItemId()) {
 		case R.id.scan_for_printers:
@@ -585,17 +578,13 @@ public class DiscoverPrintersFragment extends Fragment implements
 
 		return response;
 	}
-	
-	private void startProcess(){
-		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+	private void startProcess() {
 		if (mBluetoothAdapter == null) {
 			// Device does not support Bluetooth
-			Log.d(TAG,
-					"onOptionsItemSelected   :: bluetooth  hardware not present");
-			showAlertDialog(
-					"No Hardware",
-					"No bluetooth hardware prent on the device ! Disconnecting .....",
-					"Ok", noHardwareOkButtonClicked);
+			Log.d(TAG, "onOptionsItemSelected   :: bluetooth  hardware not present");
+			showAlertDialog("No Hardware", "No bluetooth hardware prent on the device ! Disconnecting .....", "Ok",
+					noHardwareOkButtonClicked);
 		} else {
 			turnOnBlutooth();
 		}
@@ -613,8 +602,7 @@ public class DiscoverPrintersFragment extends Fragment implements
 				if (mDiscoveryDuration <= 5) {
 					// check if printer is found
 					scanForPairedDevices();
-					mDiscoverDevicesHandler.sendEmptyMessageDelayed(
-							CHECK_FOR_DEVICES, ONE_SECOND);
+					mDiscoverDevicesHandler.sendEmptyMessageDelayed(CHECK_FOR_DEVICES, ONE_SECOND);
 				} else if (mDiscoveryDuration >= 5) {
 					mDiscoveryDuration = 0;
 					mDiscoverDevicesHandler.removeMessages(CHECK_FOR_DEVICES);
@@ -639,37 +627,83 @@ public class DiscoverPrintersFragment extends Fragment implements
 			// failed to turn on Bluetooth
 		} else if (requestCode == REQUEST_ENABLE_BT) {
 			// Bluetooth turned on successfully
-			setUpDiscovery();
-			/*setDeviceAdapter();
-			startDiscoveringDevices();
-			mDiscoverDevicesHandler.sendEmptyMessageDelayed(CHECK_FOR_DEVICES,
-					ONE_SECOND);*/
+			// setUpDiscovery();
+
+		} else if (requestCode == REQUEST_ENABLE_BT && resultCode != 1) {
+			// unsuccessful in turning ON Bluetooth
+			hideProgressDialog();
+			isCancled = true;
+			/*
+			 * showAlertDialog("Failure !", "Unable to turn ON Bluetooth", "Ok",
+			 * btOkButton);
+			 */
 		}
 	}
-	
-	
 
-	private void setDeviceAdapter() {
-		Log.d(TAG, "setDeviceAdapter   :: not null");
+	private DialogInterface.OnClickListener btOkButton = new OnClickListener() {
+
+		@Override
+		public void onClick(DialogInterface dialog, int which) {
+			// TODO Auto-generated method stub
+
+		}
+	};
+
+	protected void setDeviceAdapter() {
+		getActivity().runOnUiThread(new Runnable() {
+			public void run() {
+				setDeviceAdapterTwo();
+			}
+		});
+
+	}
+
+	private void setDeviceAdapterTwo() {
+
 		scanForPairedDevices();
 		adapter = new ScannerAdapter(PrinterDetail.getPrinterList());
+		Log.d(TAG, "setDeviceAdapter   ::" + PrinterDetail.getPrinterList().size());
+		
+		  /*AlertDialogHelper.showAlertDialogForDevices(getActivity(), adapter,
+		  onScanButtonClicklistener, onCancleScanButtonClicklistener,
+		  onDeviceSelectedListner);*/
+		 
+
 		mDiscoveredDevicesListView.setAdapter(adapter);
 		mDiscoveredDevicesListView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
-			public void onItemClick(AdapterView<?> arg0, View view, int position,
-					long id) {
+			public void onItemClick(AdapterView<?> arg0, View view, int position, long id) {
 				Log.d(TAG, "onItemClick   ::");
 				PrinterDetail printerDetail = PrinterDetail.getPrinterList().get(position);
-				if(printerDetail != null && printerDetail.getMacAddress() != null){
+				if (printerDetail != null && printerDetail.getMacAddress() != null) {
 					Log.d(TAG, "onItemClick   :: not null");
 					AccountPreference.setPrinter(printerDetail.getMacAddress());
-					if(isCalledForResult){
+					if (isCalledForResult) {
 						getActivity().setResult(PrintPVTFragment.GET_MAC_ADDDRESS_RESULT_CODE);
 					}
 				}
 			}
 		});
+
 	}
 
+	private OnItemClickListener onDeviceSelectedListner = new OnItemClickListener() {
+
+		@Override
+		public void onItemClick(AdapterView<?> arg0, View view, int position, long arg3) {
+			Log.d(TAG, "onDeviceSelectedListner....." + position);
+			AlertDialogHelper.cancelCurrentAlertDialog();
+			Log.d(TAG, "onItemClick   ::");
+			PrinterDetail printerDetail = PrinterDetail.getPrinterList().get(position);
+			if (printerDetail != null && printerDetail.getMacAddress() != null) {
+				Log.d(TAG, "onItemClick   :: not null");
+				AccountPreference.setPrinter(printerDetail.getMacAddress());
+				if (isCalledForResult) {
+					getActivity().setResult(PrintPVTFragment.GET_MAC_ADDDRESS_RESULT_CODE);
+				}
+			}
+			;
+		}
+	};
 }

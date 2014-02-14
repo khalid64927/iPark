@@ -10,7 +10,6 @@ import android.view.Window;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.smikeapps.parking.R;
 import com.smikeapps.parking.adapters.ScannerAdapter;
@@ -21,6 +20,10 @@ public class AlertDialogHelper {
 	
 	private static AlertDialog alertDialog;
 	private static Dialog dialog;
+	
+	public interface SmikeAppException {
+		public String getLocalizedMessage(Context context);
+	}
 	
 	public static void showAlertDialogForLogout(Context context, String title, String message,
 			DialogInterface.OnClickListener regConfirmOKBtnClick,DialogInterface.OnClickListener regConfirmCancelBtnClick, String negativeButtonLable, String positiveButtonLable) {
@@ -119,7 +122,7 @@ public class AlertDialogHelper {
 		}
 	}
 	
-	private static void showAlertDialogForDevices ( Context context, ScannerAdapter adapter, 
+	public static void showAlertDialogForDevices ( Context context, ScannerAdapter adapter, 
 			OnClickListener onScanButtonClicklistener, OnClickListener onCancleScanButtonClicklistener, OnItemClickListener onDeviceSelectedListner ) {
 		
 		try {

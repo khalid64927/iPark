@@ -71,15 +71,15 @@
   
   <!-- ActionBar styles -->
     <style name="MyActionBar" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
-        <item name="android:background">@color/splash_screen_grey</item>
-        <item name="android:actionMenuTextColor">@color/blue</item>
+        <item name="android:background">@color/white</item>
+        <item name="android:actionMenuTextColor">@color/black</item>
         <item name="android:backgroundStacked">@drawable/apptheme_tab_indicator_holo</item>
         <item name="android:titleTextStyle">@style/MyActionBarTitleText</item>
 
         <!-- Support library compatibility -->
-        <item name="background">@color/splash_screen_grey</item>
+        <item name="background">@color/white</item>
         <item name="backgroundStacked">@drawable/apptheme_tab_indicator_holo</item>
-        <item name="actionMenuTextColor">@color/blue</item>
+        <item name="actionMenuTextColor">@color/black</item>
         <item name="titleTextStyle">@style/MyActionBarTitleText</item>
     </style>
     

@@ -1,4 +1,4 @@
-package com.smikeapps.parking.manager;
+package com.smikeapps.parking.managers;
 
 import com.smikeapps.parking.interfaces.BluetoothConnectionListner;
 

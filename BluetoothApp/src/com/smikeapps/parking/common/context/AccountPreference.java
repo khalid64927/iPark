@@ -1,5 +1,7 @@
 package com.smikeapps.parking.common.context;
 
+import com.smikeapps.parking.comman.utils.AuthToken;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -16,6 +18,12 @@ public class AccountPreference {
 	private static final String CURRENT_SLOT_ID = "vSlotId";
 	
 	private static final String SELECTED_PRINTER = "vMacAddress";
+	
+	private static final String ACCESS_TOKEN = "AccessToken";
+	private static final String CREATED_ON = "CreatedOn";
+	private static final String USER_ID = "UserId";
+	
+	private static final String TOKEN_STRING = "tokenString";
 
 	private static SharedPreferences accountPreference;
 
@@ -28,6 +36,42 @@ public class AccountPreference {
 			accountPreference = context.getApplicationContext()
 					.getSharedPreferences(PARKING_ACCOUNT, Activity.MODE_PRIVATE);
 		}
+	}
+
+	synchronized public static void setAuthToken(AuthToken token) {
+
+		SharedPreferences.Editor editor = accountPreference.edit();
+		if (token != null) {
+			editor.putString(ACCESS_TOKEN, token.getAccessToken());
+			editor.putString(CREATED_ON, token.getCreatedOn());
+			editor.putString(USER_ID, token.getUserId());
+		} else {
+			editor.remove(ACCESS_TOKEN);
+			editor.remove(CREATED_ON);
+			editor.remove(USER_ID);
+		}
+		editor.commit();
+	}
+
+	public static AuthToken getAuthToken() {
+
+		String accessToken = accountPreference.getString(ACCESS_TOKEN, null);
+		String createOn = accountPreference.getString(CREATED_ON, null);
+		String userId = accountPreference.getString(USER_ID, null);
+
+		return new AuthToken(accessToken, userId, createOn);
+	}
+	
+	public static String getTokenString() {
+
+		return accountPreference.getString(TOKEN_STRING, "");
+	}
+
+	synchronized public static void setTokenString(String tokenString) {
+
+		SharedPreferences.Editor editor = accountPreference.edit();
+		editor.putString(TOKEN_STRING, tokenString);
+		editor.commit();
 	}
 
 	public static String getLogin() {

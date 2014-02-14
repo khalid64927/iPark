@@ -1354,12 +1354,14 @@ containing a value of this type.
         public static final int action_printer=0x7f0a0010;
         public static final int action_scan=0x7f0a000e;
         public static final int action_scan_cancle=0x7f0a000f;
+        public static final int app_failure_case_undefined=0x7f0a0027;
         public static final int app_name=0x7f0a000d;
         public static final int category=0x7f0a001a;
         public static final int check_pvt=0x7f0a0012;
         public static final int check_pvt_button_lable=0x7f0a001d;
         public static final int discover_printer=0x7f0a0025;
         public static final int hello_world=0x7f0a0011;
+        public static final int invalid_access_token=0x7f0a0026;
         public static final int issue_pvt=0x7f0a0013;
         public static final int issue_pvt_button_lable=0x7f0a001e;
         public static final int login_button_lable=0x7f0a0016;
@@ -1375,6 +1377,7 @@ containing a value of this type.
         public static final int plate_source_value=0x7f0a0021;
         public static final int print_pvt_button_lable=0x7f0a0024;
         public static final int region=0x7f0a001b;
+        public static final int server_not_responding=0x7f0a0028;
         public static final int username_hint=0x7f0a0014;
     }
     public static final class style {
