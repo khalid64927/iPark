@@ -334,22 +334,25 @@ public class DiscoverPrintersFragment extends Fragment implements BackButtonInte
 
 	/* Progress dialog management */
 
-	protected void showProgressDialog(String loadingMessage) {
-		if (progressDialog != null) {
-			return;
-		}
-		progressDialog = ProgressDialog.show(getActivity(), "", loadingMessage, true);
-	}
-
-	private void changeProgressMessage(final String message) {
+	protected void showProgressDialog(final String loadingMessage) {
 		getActivity().runOnUiThread(new Runnable() {
 			public void run() {
-				if (progressDialog != null && progressDialog.isShowing()) {
-					progressDialog.setMessage(message);
+				Log.d(TAG, "showProgressDialog.....");
+				if (progressDialog == null) {
+					Log.d(TAG, "showProgressDialog.. progress is null...");
+					progressDialog = ProgressDialog.show(getActivity(), "",
+							loadingMessage, true);
+				} else if (progressDialog != null && progressDialog.isShowing()) {
+					Log.d(TAG, "showProgressDialog..is sshowing...");
+					progressDialog.setMessage(loadingMessage);
+				}else if(progressDialog != null && !progressDialog.isShowing() && (AlertDialogHelper.alertDialog != null && !AlertDialogHelper.alertDialog.isShowing())) {
+					Log.d(TAG, "showProgressDialog..alert dialog is not visible...");
+					progressDialog = ProgressDialog.show(getActivity(), "",
+							loadingMessage, true);
 				}
 			}
 		});
-		DemoSleeper.sleep(1000);
+
 	}
 
 	/**
@@ -369,48 +372,73 @@ public class DiscoverPrintersFragment extends Fragment implements BackButtonInte
 	}
 
 	public ZebraPrinter connect() {
-		Log.d(TAG, "connect   :: ...");
-		changeProgressMessage("Connecting...");
+		Log.d(TAG, "connect.....");
+		showProgressDialog("Connecting...");
 		zebraPrinterConnection = null;
-		if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && !mBluetoothAdapter.isDiscovering()) {
-			zebraPrinterConnection = new BluetoothPrinterConnection(AccountPreference.getPrinter());
-			// SettingsHelper.saveBluetoothAddress(this,
-			// getMacAddressFieldText());
+		if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
+				&& !mBluetoothAdapter.isDiscovering()) {
+			zebraPrinterConnection = new BluetoothPrinterConnection(
+					AccountPreference.getPrinter());
+			
 		} else {
-			Log.d(TAG, "connect  :: bluetooth is not present or OFF or in Discovering device now ");
+			Log.d(TAG,
+					"connect  :: bluetooth is not present or OFF or in Discovering device now ");
 		}
 
 		try {
 			zebraPrinterConnection.open();
 		} catch (ZebraPrinterConnectionException e) {
-			showAlertDialog("Comm Error", "Communication error! Disconnecting .....", "Ok", logoutOKBtnClick);
-			DemoSleeper.sleep(1000);
-			disconnect();
+			showAlertDialog("Comm Error",
+					"Communication error! Disconnecting .....", "Ok",
+					errorDialogOkBtnClick);
+		//	DemoSleeper.sleep(1000);
+		//	disconnect();
+			return null;
 		}
 
 		ZebraPrinter printer = null;
 
 		if (zebraPrinterConnection.isConnected()) {
 			try {
-				printer = ZebraPrinterFactory.getInstance(zebraPrinterConnection);
-				changeProgressMessage("Determining Printer Language");
+				printer = ZebraPrinterFactory
+						.getInstance(zebraPrinterConnection);
+				showProgressDialog("Determining Printer Language");
 				PrinterLanguage pl = printer.getPrinterControlLanguage();
 			} catch (ZebraPrinterConnectionException e) {
-				showAlertDialog("Communication Error", "Unable to connect with printer! Disconnecting .....", "Ok", logoutOKBtnClick);
-				printer = null;
-				DemoSleeper.sleep(1000);
-				disconnect();
-			} catch (ZebraPrinterLanguageUnknownException e) {
-				showAlertDialog("Communication Error", "Unknown Printer Language! unable to connect with printer Disconnecting .....",
+				showAlertDialog("Communication Error",
+						"Unable to connect with printer! Disconnecting .....",
 						"Ok", logoutOKBtnClick);
 				printer = null;
 				DemoSleeper.sleep(1000);
 				disconnect();
+			} catch (ZebraPrinterLanguageUnknownException e) {
+				showAlertDialog(
+						"Communication Error",
+						"Unknown Printer Language! unable to connect with printer Disconnecting .....",
+						"Ok", logoutOKBtnClick);
+				printer = null;
+				return printer;
+				/*DemoSleeper.sleep(1000);
+				disconnect();*/
 			}
 		}
 
 		return printer;
 	}
+	
+	/* Cancel Registration ok button click */
+	private android.content.DialogInterface.OnClickListener errorDialogOkBtnClick = new DialogInterface.OnClickListener() {
+		public void onClick(final DialogInterface dialog, int which) {
+			Log.v(TAG, "regCancelOKBtnClick()");
+			getActivity().runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					dialog.dismiss();
+				}
+			});
+		}
+	};
 
 	/* Cancel Registration ok button click */
 	private android.content.DialogInterface.OnClickListener logoutOKBtnClick = new DialogInterface.OnClickListener() {
@@ -448,7 +476,7 @@ public class DiscoverPrintersFragment extends Fragment implements BackButtonInte
 
 	private void sendTestLabel() {
 		Log.d(TAG, "sendTestLabel   :: ...");
-		changeProgressMessage("Sending print job...");
+		showProgressDialog("Sending print job...");
 		try {
 			byte[] configLabel = getConfigLabel();
 			zebraPrinterConnection.write(configLabel);
@@ -487,19 +515,20 @@ public class DiscoverPrintersFragment extends Fragment implements BackButtonInte
 	}
 
 	public void disconnect() {
+		Log.d(TAG, "disconnect.....");
 		try {
-			changeProgressMessage("Disconnecting...");
+			showProgressDialog("Disconnecting printer connection...");
 			if (zebraPrinterConnection != null) {
 				zebraPrinterConnection.close();
 			}
-			changeProgressMessage("Printer not connected");
 		} catch (ZebraPrinterConnectionException e) {
-			showAlertDialog("Comm Error", "Communication error! Disconnecting .....", "Ok", logoutOKBtnClick);
+			showAlertDialog("Connection Error",
+					"Unable to disconnectec!", "Ok",
+					logoutOKBtnClick);
 		} finally {
 			enableScanButton(true);
 		}
 	}
-
 	private void startDiscoveringDevices() {
 		Log.d(TAG, "startDiscoveringDevices   :: ...");
 		stopDiscoveringDevices();

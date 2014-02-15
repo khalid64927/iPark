@@ -18,7 +18,7 @@ import com.smikeapps.parking.adapters.ScannerAdapter;
 public class AlertDialogHelper {
 	
 	
-	private static AlertDialog alertDialog;
+	public static AlertDialog alertDialog;
 	private static Dialog dialog;
 	
 	public interface SmikeAppException {
@@ -38,7 +38,6 @@ public class AlertDialogHelper {
 
 		builder.setNegativeButton(negativeButtonLable, regConfirmCancelBtnClick);
 		builder.setPositiveButton(positiveButtonLable, regConfirmOKBtnClick);
-
 
 		try {
 			cancelCurrentAlertDialog ();

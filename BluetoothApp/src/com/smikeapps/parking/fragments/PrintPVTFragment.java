@@ -54,7 +54,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	private ScannerAdapter adapter;
 
 	private BluetoothAdapter mBluetoothAdapter;
-	private static final String TAG = PrintPVTFragment.class.getName();
+	private static final String TAG = "PrintPVTFragment";
 	// private
 	Set<BluetoothDevice> pairedDevices;
 	// private ArrayAdapter<String> mArrayAdapter;
@@ -144,6 +144,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 
 		@Override
 		public void onClick(View v) {
+			Log.d(TAG, "onPrintPVTButtonClicked ...");
 			showProgressDialog("intializing print...");
 			isProcessFinished = false;
 			mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -239,6 +240,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	}
 
 	private void turnOnBlutooth() {
+		Log.d(TAG, "turnOnBlutooth.....");
 		if (!mBluetoothAdapter.isEnabled()) {
 			Intent enableBtIntent = new Intent(
 					BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -255,6 +257,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	}
 
 	private void startConnectionTest() {
+		Log.d(TAG, "startConnectionTest.....");
 		// check connection
 		showProgressDialog("Printing your PVT...");
 		new Thread(new Runnable() {
@@ -302,6 +305,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	protected void enableTestButton(final boolean enabled) {
 		getActivity().runOnUiThread(new Runnable() {
 			public void run() {
+				Log.d(TAG, "enableTestButton....." + enabled);
 				mPrintPVTButton.setEnabled(enabled);
 			}
 		});
@@ -309,6 +313,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	}
 
 	private void doConnectionTest() {
+		Log.d(TAG, "doConnectionTest.....");
 		printer = connect();
 		if (printer != null) {
 			sendTestLabel();
@@ -323,6 +328,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		getActivity().runOnUiThread(new Runnable() {
 			public void run() {
 				hideProgressDialog();
+				AlertDialogHelper.cancelCurrentAlertDialog();
 				AlertDialogHelper.showAlertDialogForLogout(getActivity(),
 						title, message, regConfirmOKBtnClick, okButtonLable);
 			}
@@ -334,13 +340,18 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	protected void showProgressDialog(final String loadingMessage) {
 		getActivity().runOnUiThread(new Runnable() {
 			public void run() {
+				Log.d(TAG, "showProgressDialog.....");
 				if (progressDialog == null) {
+					Log.d(TAG, "showProgressDialog.. progress is null...");
 					progressDialog = ProgressDialog.show(getActivity(), "",
 							loadingMessage, true);
-				} else {
-					if (progressDialog != null && progressDialog.isShowing()) {
-						progressDialog.setMessage(loadingMessage);
-					}
+				} else if (progressDialog != null && progressDialog.isShowing()) {
+					Log.d(TAG, "showProgressDialog..is sshowing...");
+					progressDialog.setMessage(loadingMessage);
+				}else if(progressDialog != null && !progressDialog.isShowing() && (AlertDialogHelper.alertDialog != null && !AlertDialogHelper.alertDialog.isShowing())) {
+					Log.d(TAG, "showProgressDialog..alert dialog is not visible...");
+					progressDialog = ProgressDialog.show(getActivity(), "",
+							loadingMessage, true);
 				}
 			}
 		});
@@ -363,14 +374,14 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	}
 
 	public ZebraPrinter connect() {
+		Log.d(TAG, "connect.....");
 		showProgressDialog("Connecting...");
 		zebraPrinterConnection = null;
 		if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
 				&& !mBluetoothAdapter.isDiscovering()) {
 			zebraPrinterConnection = new BluetoothPrinterConnection(
 					AccountPreference.getPrinter());
-			// SettingsHelper.saveBluetoothAddress(this,
-			// getMacAddressFieldText());
+			
 		} else {
 			Log.d(TAG,
 					"connect  :: bluetooth is not present or OFF or in Discovering device now ");
@@ -381,9 +392,10 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		} catch (ZebraPrinterConnectionException e) {
 			showAlertDialog("Comm Error",
 					"Communication error! Disconnecting .....", "Ok",
-					logoutOKBtnClick);
-			DemoSleeper.sleep(1000);
-			disconnect();
+					errorDialogOkBtnClick);
+		//	DemoSleeper.sleep(1000);
+		//	disconnect();
+			return null;
 		}
 
 		ZebraPrinter printer = null;
@@ -407,8 +419,9 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 						"Unknown Printer Language! unable to connect with printer Disconnecting .....",
 						"Ok", logoutOKBtnClick);
 				printer = null;
-				DemoSleeper.sleep(1000);
-				disconnect();
+				return printer;
+				/*DemoSleeper.sleep(1000);
+				disconnect();*/
 			}
 		}
 
@@ -422,6 +435,20 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 
 		}
 	};
+	
+	/* Cancel Registration ok button click */
+	private android.content.DialogInterface.OnClickListener errorDialogOkBtnClick = new DialogInterface.OnClickListener() {
+		public void onClick(final DialogInterface dialog, int which) {
+			Log.v(TAG, "regCancelOKBtnClick()");
+			getActivity().runOnUiThread(new Runnable() {
+				
+				@Override
+				public void run() {
+					dialog.dismiss();
+				}
+			});
+		}
+	};
 
 	/* Cancel Registration ok button click */
 	private android.content.DialogInterface.OnClickListener logoutCancelBtnClick = new DialogInterface.OnClickListener() {
@@ -433,6 +460,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	};
 
 	private void sendTestLabel() {
+		Log.d(TAG, "sendTestLabel.....");
 		showProgressDialog("Sending print job...");
 		try {
 			byte[] configLabel = getConfigLabel();
@@ -475,15 +503,15 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	}
 
 	public void disconnect() {
+		Log.d(TAG, "disconnect.....");
 		try {
-			showProgressDialog("Disconnecting...");
+			showProgressDialog("Disconnecting printer connection...");
 			if (zebraPrinterConnection != null) {
 				zebraPrinterConnection.close();
 			}
-			showProgressDialog("Printer not connected");
 		} catch (ZebraPrinterConnectionException e) {
-			showAlertDialog("Comm Error",
-					"Communication error! Disconnecting .....", "Ok",
+			showAlertDialog("Connection Error",
+					"Unable to disconnectec!", "Ok",
 					logoutOKBtnClick);
 		} finally {
 			enableTestButton(true);
@@ -494,6 +522,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
+		Log.d(TAG, "onActivityResult.....");
 		if (requestCode == BLUTOOTH_DISCOVERABILITY_DURATION) {
 			// successful turning on bluetooth device
 
@@ -536,6 +565,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	};
 
 	private void openPrinterDiscovery(boolean isForResult) {
+		Log.d(TAG, "openPrinterDiscovery.....");
 		disconnect();
 		Intent intent = new Intent(getActivity(), DiscoverPrinterActivity.class);
 		Bundle extra = new Bundle();
