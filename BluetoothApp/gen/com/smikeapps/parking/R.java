@@ -1119,8 +1119,9 @@ containing a value of this type.
         public static final int ic_launcher=0x7f0200b4;
         public static final int login=0x7f0200b5;
         public static final int login_bg=0x7f0200b6;
-        public static final int pvt_one=0x7f0200b7;
-        public static final int splash=0x7f0200b8;
+        public static final int new_appicon=0x7f0200b7;
+        public static final int pvt_one=0x7f0200b8;
+        public static final int splash=0x7f0200b9;
     }
     public static final class id {
         public static final int Category=0x7f05004a;

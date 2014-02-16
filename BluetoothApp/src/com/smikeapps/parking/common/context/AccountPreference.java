@@ -1,6 +1,7 @@
 package com.smikeapps.parking.common.context;
 
 import com.smikeapps.parking.comman.utils.AuthToken;
+import com.smikeapps.parking.comman.utils.PrinterDetail;
 
 import android.app.Activity;
 import android.content.Context;
@@ -17,7 +18,8 @@ public class AccountPreference {
 	private static final String CURRENT_SHOP_ID = "CurrentShopId";
 	private static final String CURRENT_SLOT_ID = "vSlotId";
 	
-	private static final String SELECTED_PRINTER = "vMacAddress";
+	private static final String SELECTED_PRINTER_MAC_ADDRESS = "vMacAddress";
+	private static final String SELECTED_PRINTER_NAME = "vPrinterName";
 	
 	private static final String ACCESS_TOKEN = "AccessToken";
 	private static final String CREATED_ON = "CreatedOn";
@@ -125,14 +127,16 @@ public class AccountPreference {
 	
 
 
-	synchronized public static void setPrinter(String macAddress) {
+	synchronized public static void setPrinter(String macAddress, String printerName) {
 		SharedPreferences.Editor editor = accountPreference.edit();
-		editor.putString(SELECTED_PRINTER, macAddress);
+		editor.putString(SELECTED_PRINTER_MAC_ADDRESS, macAddress);
+		editor.putString(SELECTED_PRINTER_NAME, printerName);
 		editor.commit();
 	}
 
-	synchronized public static String getPrinter() {
-		return accountPreference.getString(SELECTED_PRINTER, null);
+	synchronized public static PrinterDetail getPrinter() {
+		PrinterDetail printerDetail = new PrinterDetail(accountPreference.getString(SELECTED_PRINTER_NAME, null), accountPreference.getString(SELECTED_PRINTER_MAC_ADDRESS, null));
+		return printerDetail;
 	}
 	
 

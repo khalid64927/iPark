@@ -23,6 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 
@@ -32,9 +33,11 @@ import com.smikeapps.parking.activities.HomeBaseActivity;
 import com.smikeapps.parking.activities.HomeScreenActivity;
 import com.smikeapps.parking.adapters.ScannerAdapter;
 import com.smikeapps.parking.comman.utils.AlertDialogHelper;
+import com.smikeapps.parking.comman.utils.IssueTicket;
 import com.smikeapps.parking.comman.utils.PrinterDetail;
 import com.smikeapps.parking.common.context.AccountPreference;
 import com.smikeapps.parking.interfaces.BackButtonInterface;
+import com.smikeapps.parking.tabs.HomeContainerInterface;
 import com.zebra.android.comm.BluetoothPrinterConnection;
 import com.zebra.android.comm.ZebraPrinterConnection;
 import com.zebra.android.comm.ZebraPrinterConnectionException;
@@ -44,7 +47,7 @@ import com.zebra.android.printer.ZebraPrinter;
 import com.zebra.android.printer.ZebraPrinterFactory;
 import com.zebra.android.printer.ZebraPrinterLanguageUnknownException;
 
-public class PrintPVTFragment extends Fragment implements BackButtonInterface {
+public class PrintPVTFragment extends Fragment implements BackButtonInterface, HomeContainerInterface {
 
 	private View mRoootView;
 	private Button mPrintPVTButton;
@@ -52,6 +55,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	private ZebraPrinterConnection zebraPrinterConnection;
 
 	private ScannerAdapter adapter;
+	private static final String TICKET_DETAILS = "ticket_details";
 
 	private BluetoothAdapter mBluetoothAdapter;
 	private static final String TAG = "PrintPVTFragment";
@@ -66,6 +70,13 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	private static final int CHECK_FOR_DEVICES = REQUEST_ENABLE_BT + 1;
 	private boolean onPauseCalled = false;
 	private boolean isProcessFinished = true;
+	IssueTicket ticket;
+	
+	private TextView plateSource;
+	private TextView plateCode;
+	private TextView plateNumber;
+	private TextView category;
+	private TextView region;
 
 	private static final int GET_MAC_ADDDRESS_REQUEST_CODE = CHECK_FOR_DEVICES + 1;
 	public static final int GET_MAC_ADDDRESS_RESULT_CODE = GET_MAC_ADDDRESS_REQUEST_CODE + 1;
@@ -75,6 +86,11 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
+		if(getArguments().containsKey(TICKET_DETAILS)){
+			Bundle bundle = getArguments();
+			ticket = (IssueTicket)bundle.getSerializable(TICKET_DETAILS);
+			Log.d(TAG, "printer daata >....................."+ticket.getPlateSource());
+		}
 		mRoootView = inflater.inflate(R.layout.fragment_confirm_pvt, null);
 		initUI();
 		setUpActionBar();
@@ -95,6 +111,7 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		inflater.inflate(R.menu.print_pvt_frament_menu, menu);
 		((HomeBaseActivity) getActivity()).getSupportActionBar()
 				.setDisplayHomeAsUpEnabled(true);
+		MenuItem printer = menu.getItem(0);
 	}
 
 	@Override
@@ -102,16 +119,6 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 		boolean response = false;
 		switch (item.getItemId()) {
 		case R.id.printers:
-			disconnect();
-			Intent intent = new Intent(getActivity(),
-					DiscoverPrinterActivity.class);
-			Bundle extra = new Bundle();
-			extra.putBoolean(
-					DiscoverPrintersFragment.EXTRA_TAG_IS_CALLLED_FOR_RESULT,
-					true);
-			intent.putExtras(extra);
-			startActivity(intent);
-			response = true;
 			openPrinterDiscovery(false);
 			break;
 
@@ -128,14 +135,27 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	}
 
 	private void initUI() {
+		
+		plateCode = (TextView) mRoootView.findViewById(R.id.plateCodeSelected);
+		plateNumber = (TextView) mRoootView.findViewById(R.id.plateNumberSelected);
+		category = (TextView) mRoootView.findViewById(R.id.categorySelected);
+		region = (TextView) mRoootView.findViewById(R.id.regionSelected);
+		plateSource = (TextView) mRoootView.findViewById(R.id.plateSourceSelected);
+		
+		plateCode.setText(ticket.getPlateCode());
+		category.setText(ticket.getPlatecategory());
+		plateSource.setText(ticket.getPlateSource());
+		plateNumber.setText(ticket.getPlateNumber());
+		region.setText(ticket.getPlateRegion());
+		
 		mPrintPVTButton = (Button) mRoootView.findViewById(R.id.printPVTButton);
 		mPrintPVTButton.setOnClickListener(onPrintPVTButtonClicked);
 	}
 
-	public static PrintPVTFragment newInstance(int tabPosition) {
+	public static PrintPVTFragment newInstance(String ps, String cat, String rg, String plc, String pn) {
 		PrintPVTFragment fragment = new PrintPVTFragment();
 		Bundle args = new Bundle();
-		args.putInt(HomeScreenActivity.TAB_POSITION, tabPosition);
+		args.putSerializable(TICKET_DETAILS, new IssueTicket(ps, cat, rg, plc, pn));
 		fragment.setArguments(args);
 		return fragment;
 	}
@@ -367,7 +387,6 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 				if (progressDialog != null) {
 					progressDialog.dismiss();
 				}
-
 			}
 		});
 
@@ -375,26 +394,37 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 
 	public ZebraPrinter connect() {
 		Log.d(TAG, "connect.....");
-		showProgressDialog("Connecting...");
+		showProgressDialog("Connecting to printer "+AccountPreference.getPrinter().getFriendlyName() + "\n"+AccountPreference.getPrinter().getMacAddress() );
 		zebraPrinterConnection = null;
 		if (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled()
 				&& !mBluetoothAdapter.isDiscovering()) {
 			zebraPrinterConnection = new BluetoothPrinterConnection(
-					AccountPreference.getPrinter());
+					AccountPreference.getPrinter().getMacAddress());
 			
 		} else {
 			Log.d(TAG,
 					"connect  :: bluetooth is not present or OFF or in Discovering device now ");
 		}
-
+		
+		if(zebraPrinterConnection == null){
+			if(AccountPreference.getPrinter() != null){
+				showAlertDialog("Communication Error",
+						"Counld no connect to Printer Disconnecting .....", "Ok",
+						errorDialogOkBtnClick);
+			}else{
+				showAlertDialog("Communication Error",
+						"Counld no connect to Printer :"+AccountPreference.getPrinter().getFriendlyName() + "\n"+AccountPreference.getPrinter().getMacAddress()+"\n"+"Disconnecting .....", "Ok",
+						errorDialogOkBtnClick);
+			}
+		
+			return null;
+		}
 		try {
 			zebraPrinterConnection.open();
 		} catch (ZebraPrinterConnectionException e) {
-			showAlertDialog("Comm Error",
-					"Communication error! Disconnecting .....", "Ok",
+			showAlertDialog("Communication Error",
+					"Counld no connect to Printer :"+AccountPreference.getPrinter().getFriendlyName() + "\n"+AccountPreference.getPrinter().getMacAddress()+"\n"+"Disconnecting .....", "Ok",
 					errorDialogOkBtnClick);
-		//	DemoSleeper.sleep(1000);
-		//	disconnect();
 			return null;
 		}
 
@@ -414,10 +444,15 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 				DemoSleeper.sleep(1000);
 				disconnect();
 			} catch (ZebraPrinterLanguageUnknownException e) {
-				showAlertDialog(
-						"Communication Error",
-						"Unknown Printer Language! unable to connect with printer Disconnecting .....",
-						"Ok", logoutOKBtnClick);
+				if(AccountPreference.getPrinter() != null){
+					showAlertDialog("Communication Error",
+							"Counld no connect to Printer Disconnecting .....", "Ok",
+							errorDialogOkBtnClick);
+				}else{
+					showAlertDialog("Communication Error",
+							"Counld no connect to Printer :"+AccountPreference.getPrinter().getFriendlyName() + "\n"+AccountPreference.getPrinter().getMacAddress()+"\n"+"Disconnecting .....", "Ok",
+							errorDialogOkBtnClick);
+				}
 				printer = null;
 				return printer;
 				/*DemoSleeper.sleep(1000);
@@ -534,10 +569,10 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 			// unsuccessful in turning ON Bluetooth
 			hideProgressDialog();
 			showAlertDialog("Failure !", "Unable to turn ON Bluetooth","Ok", btOkButton);
-		}*/ /*else if (requestCode == GET_MAC_ADDDRESS_REQUEST_CODE
+		}*/ else if (requestCode == GET_MAC_ADDDRESS_REQUEST_CODE
 				&& resultCode == GET_MAC_ADDDRESS_RESULT_CODE) {
 			startConnectionTest();
-		}*/
+		}
 	}
 	
 	private void checkForConnPrinter(){
@@ -563,21 +598,37 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 			
 		}
 	};
+	private boolean disableMenu = false;
 
-	private void openPrinterDiscovery(boolean isForResult) {
+	private void openPrinterDiscovery(final boolean isForResult) {
 		Log.d(TAG, "openPrinterDiscovery.....");
-		disconnect();
-		Intent intent = new Intent(getActivity(), DiscoverPrinterActivity.class);
-		Bundle extra = new Bundle();
-		extra.putBoolean(
-				DiscoverPrintersFragment.EXTRA_TAG_IS_CALLLED_FOR_RESULT, true);
-		intent.putExtras(extra);
-		if (isForResult) {
-			startActivityForResult(intent, GET_MAC_ADDDRESS_REQUEST_CODE);
-		} else {
-			startActivity(intent);
-		}
-
+		new Thread(new Runnable() {
+			public void run() {
+				disconnect();
+				gotoDiscoveFragment(isForResult);
+			}
+		}).start();
+	}
+	
+	
+	
+	private void gotoDiscoveFragment(final boolean isForResult ){
+		getActivity().runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				Intent intent = new Intent(getActivity(), DiscoverPrinterActivity.class);
+				Bundle extra = new Bundle();
+				extra.putBoolean(
+						DiscoverPrintersFragment.EXTRA_TAG_IS_CALLLED_FOR_RESULT, isForResult);
+				intent.putExtras(extra);
+				if (isForResult) {
+					startActivityForResult(intent, GET_MAC_ADDDRESS_REQUEST_CODE);
+				} else {
+					startActivity(intent);
+				}
+			}
+		});
 	}
 
 	private void registerForBluetoothStateChanges() {
@@ -630,5 +681,34 @@ public class PrintPVTFragment extends Fragment implements BackButtonInterface {
 	public boolean onNavigationBackButtonPressed() {
 		getParentFragment().getChildFragmentManager().popBackStack();
 		return true;
+	}
+
+	@Override
+	public void onFragmentSwipe() {
+		Log.d(TAG, "onFragmentSwipe   ::...");
+		
+	}
+
+	@Override
+	public void enableMenuItems() {
+		Log.d(TAG, "enableMenuItems   ::...");
+		disableMenu = false;
+		setUpActionBar();
+		
+	}
+
+	@Override
+	public void disableMenuItems() {
+		disableMenu = true;
+		
+	}
+	
+	@Override
+	public void onPrepareOptionsMenu(Menu menu) {
+		if(disableMenu){
+			menu.getItem(0).setVisible(false);
+		}else{
+			menu.getItem(0).setVisible(true);
+		}
 	}
 }

@@ -23,6 +23,55 @@ import android.view.inputmethod.InputMethodManager;
 
 public class CommonUtils {
 	
+	static String [] mPlateSource  =  {"Abu Dhabi",
+"Ajman",
+"Dubai",
+"Fujairah",
+"Bahrain",
+"Ras Al-Khaimah",
+"Sharjah",
+"UAE",
+"UMM AL QUWAIN",
+"General Organization",
+"IRAQ",
+"Jordan",
+"Kuwait",
+"LEBANON",
+"MINISTRY OF INTERIOR",
+"Military",
+"Oman",
+"Qatar",
+"Saudi Arabia",
+"Syria",
+"Yemen"};
+	
+	static String [] mZoneNumbers = {"S102","S201","S302","S408","S504","S604","S706","S805","D902","B408","R504","F604","G706","H805"};
+	
+	static String [] mCategory = {"Parking in a prohibited space",
+			"Parking on a sidewalk",
+			"Parking in or too close to or within a street crossing, railroad crossing or crosswalk",
+			"Double parking",
+			"Parking at a parking meter without paying, or for longer than the paid time",
+			"Parking in a handicapped zone without an appropriate permit",
+			"Parking without a zone permit in places where parking is severely impacted",
+			"Parking with the parking permit or payment receipt not visible",
+			"Parking for longer than the maximum time",
+			"Parking facing against the direction of traffic",
+			"Parking outside marked squares, for example angle parking where only parallel parking is allowed"};
+	
+	
+	public static String[] getPlateSources(){
+		return mPlateSource;
+	}
+	
+	public static String[] getCategory(){
+		return mCategory;
+	}
+	
+	public static String[] getRegions(){
+		return mZoneNumbers;
+	}
+	
 	public static String loadJsonFromAsset( Context context, String fileName) {
 		String json = null;
 		try {

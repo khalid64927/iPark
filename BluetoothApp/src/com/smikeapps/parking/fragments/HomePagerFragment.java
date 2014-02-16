@@ -110,7 +110,7 @@ public class HomePagerFragment extends Fragment implements BackButtonInterface, 
 	
 public void refreshActionBar() {
 		
-		final ActionBar actionBar = ((ActionBarActivity)getActivity()).getSupportActionBar();
+		final ActionBar actionBar = ((HomeBaseActivity)getActivity()).getSupportActionBar();
 		actionBar.setHomeButtonEnabled(false);
 		actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 		actionBar.setTitle(mTabsAdapter.getTabTitle(mCurrTabPosition));

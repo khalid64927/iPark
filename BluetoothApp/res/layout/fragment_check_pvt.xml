@@ -27,7 +27,7 @@
                 android:paddingBottom="5dp"
                 android:paddingTop="5dp"
                 android:text="@string/plate_source"
-                android:textSize="6pt"
+                android:textSize="8pt"
                 android:textStyle="bold" />
 
             <Spinner
@@ -49,7 +49,7 @@
                 android:paddingBottom="5dp"
                 android:paddingTop="5dp"
                 android:text="@string/plate_code"
-                android:textSize="6pt"
+                android:textSize="8pt"
                 android:textStyle="bold" />
 
             <TextView
@@ -61,7 +61,7 @@
                 android:paddingBottom="5dp"
                 android:paddingTop="5dp"
                 android:text="@string/plate_number"
-                android:textSize="6pt"
+                android:textSize="8pt"
                 android:textStyle="bold" />
 
             <Button

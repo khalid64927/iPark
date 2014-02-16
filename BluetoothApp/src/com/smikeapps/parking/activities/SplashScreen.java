@@ -18,7 +18,7 @@ import com.smikeapps.parking.R;
 public class SplashScreen extends Activity{
 	 
 	private Handler mSplashHander;
-	private static final int FIVE_SECONDS =  5000;
+	private static final int FIVE_SECONDS =  2000;
 	private static final int FINISH_SPLASH_SCREEN_MSG =  1;
 	private ProgressBarICS progressBasICS;
 	

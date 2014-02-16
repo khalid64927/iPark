@@ -129,8 +129,8 @@ public abstract class HomeBaseActivity extends ActionBarActivity implements Base
 
 	public void showConfirmationDailog() {
 		if ( this instanceof HomeScreenActivity ) {
-			AlertDialogHelper.showAlertDialog(this, "Exit title", "Exit", mOKButtonListener,
-					mCancelButtonListener, "Cancle", "Ok");
+			AlertDialogHelper.showAlertDialog(this, "Exit", "Do you want to exit the application ?", mOKButtonListener,
+					mCancelButtonListener, "No", "Yes");
 		} else {
 			finish();
 		}
